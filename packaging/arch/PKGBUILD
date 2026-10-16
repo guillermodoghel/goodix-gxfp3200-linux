@@ -1,0 +1,42 @@
+# libfprint with the goodixspi driver (Goodix GXFP3200 SPI fingerprint sensor,
+# found in ASUS ZenBook 13 UX331F). Replaces the official libfprint package.
+pkgname=libfprint-goodixspi
+# upstream libfprint master after v1.94.100 (the v1.94.100 tag no longer
+# builds with current meson); this is the commit the driver was tested on
+_libfprint_commit=6f9479c3d55f847c1b3769f28ceb99227f9858cf
+pkgver=1.94.100.r10.g6f9479c3
+pkgrel=1
+pkgdesc="libfprint with the goodixspi driver for the Goodix GXFP3200 SPI fingerprint sensor"
+arch=(x86_64)
+url="https://github.com/guillermodoghel/goodix-gxfp3200-linux"
+license=(LGPL-2.1-or-later)
+depends=(libgcc glib2 glibc libgudev libgusb openssl pixman)
+makedepends=(git meson glib2-devel)
+provides=("libfprint=1.94.100" libfprint-2.so)
+conflicts=(libfprint)
+backup=(etc/modprobe.d/goodixspi.conf)
+source=("libfprint::git+https://gitlab.freedesktop.org/libfprint/libfprint.git#commit=$_libfprint_commit"
+        "goodixspi::git+https://github.com/guillermodoghel/goodix-gxfp3200-linux.git")
+sha256sums=(SKIP SKIP)
+
+prepare() {
+  cd libfprint
+  cp ../goodixspi/driver/goodixspi.c \
+     ../goodixspi/driver/goodixspi-match.c \
+     ../goodixspi/driver/goodixspi-match.h \
+     libfprint/drivers/
+  git apply ../goodixspi/patches/0001-meson-add-goodixspi-driver.patch
+}
+
+build() {
+  arch-meson libfprint build \
+    -D doc=false \
+    -D introspection=false \
+    -D gtk-examples=false
+  meson compile -C build
+}
+
+package() {
+  meson install -C build --destdir "$pkgdir"
+  install -Dm644 goodixspi/system/goodixspi.conf "$pkgdir/etc/modprobe.d/goodixspi.conf"
+}
