@@ -1398,6 +1398,10 @@ fpi_device_goodixspi_class_init (FpiDeviceGoodixSpiClass *klass)
   dev_class->id_table = gx_id_table;
   dev_class->scan_type = FP_SCAN_TYPE_PRESS;
   dev_class->nr_enroll_stages = GX_ENROLL_STAGES;
+  /* a passive capacitive sensor, polled over SPI: nothing heats up. With the
+   * default model, libfprint stops it after ~3 minutes of continuous scanning
+   * ("Device disabled to prevent overheating"), i.e. a lock screen left on. */
+  dev_class->temp_hot_seconds = -1;
 
   dev_class->open = gx_open;
   dev_class->close = gx_close;
